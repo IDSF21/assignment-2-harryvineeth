@@ -13,6 +13,7 @@ import datetime as dt
 import plotly.graph_objects as go
 import calendar
 import json
+from urllib.request import urlopen
 #import plotly, plotly.graph_objects as go
 
 
@@ -38,20 +39,15 @@ def load_data():
     
     with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
         counties = json.load(response)
-    df = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv",dtype={"fips": str})
-    df = df.dropna(subset=['fips','cases'])
-    df["year"]=pd.to_datetime(df["date"]).dt.year
-    df["day"]=pd.to_datetime(df["date"]).dt.day
-    df["month"]=pd.to_datetime(df["date"]).dt.strftime("%b")
-    df2020=df[df["year"]==2020]
-    df2021=df[df["year"]==2021]
+    #df = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv",dtype={"fips": str})
 
-    plot_df=df2020
-    plot_var="cases"
-    data_path="Byte1/assignment-2-harryvineeth/mapbox_token/"
+    data_path="mapbox_token/"
     #days = np.sort(plot_df.date.unique())
     months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-
+    
+    df2020=pd.read_csv('cleaned/cleaned_county_covid_2020.csv')
+    plot_df=df2020
+    plot_var="cases"
     def numpy_dt64_to_str(dt64):
         day_timestamp_dt = (dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
         day_dt = dt.datetime.utcfromtimestamp(day_timestamp_dt)
@@ -114,7 +110,7 @@ def load_data():
                                       y=0,
                                       yanchor="top")]
 
-    sliders_dict = dict(active=len(days) - 1,
+    sliders_dict = dict(active=len(months) - 1,
                         visible=True,
                         yanchor="top",
                         xanchor="left",
