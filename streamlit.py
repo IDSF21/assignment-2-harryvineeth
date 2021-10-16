@@ -18,46 +18,33 @@ import plotly.figure_factory as ff
 def load_data():
 
     # Reading engagement data
-    engagements = pd.read_csv("/Users/Vineeth/Downloads/Pandas_output2.csv")
-    districts = pd.read_csv("/Users/Vineeth/Downloads/districts_info.csv")
-    products = pd.read_csv("/Users/Vineeth/Downloads/products_info.csv")
-    engagements.dropna(subset=['lp_id'], inplace=True)
-    engagements['lp_id'] = engagements['lp_id'].astype('int')
-    engagements['district_id'] = engagements['filename'].str.split(".").str[0].astype('int')
-    engagements = pd.merge(pd.merge(engagements, districts, on="district_id"), products, left_on="lp_id", right_on='LP ID')
-    engagements = engagements[['time', 'pct_access','engagement_index','state',
-             'locale','URL','Product Name','Provider/Company Name',
-             'Primary Essential Function']]
-    engagements['time'] = pd.to_datetime(engagements['time'])
-    engagements = engagements.pivot_table(index='time',columns='Product Name',values='engagement_index', aggfunc=np.mean)
+    engagements = pd.read_csv("cleaned/cleaned_engagement_data.csv")
     
-    # Reading State wise Policy data 
-    plot_data = pd.read_csv("/Users/Vineeth/Downloads/COVID-19-US-State-Policy-Database-master/data.csv", encoding='latin-1')
-    plot_data = plot_data[plot_data['date']!='0']
+    # Reading State wise School Policy data 
+    school_policy = pd.read_csv("cleaned/cleaned_school_policy_data.csv")
     
     # Reading Google Mobility data
-    mobility = pd.read_csv("/Users/Vineeth/Downloads/mobility_cleaned.csv")
-    mobility.rename(columns={"retail_and_recreation_percent_change_from_baseline": "Retail and Recreation", 
-                         "grocery_and_pharmacy_percent_change_from_baseline": "Grocery and Pharmacy",
-                        "parks_percent_change_from_baseline": "Parks", 
-                         "workplaces_percent_change_from_baseline": "Workplaces",
-                        "residential_percent_change_from_baseline": "Resedential",
-                            "sub_region_1": "State"}, inplace=True)
-    return engagements, plot_data, mobility
+    mobility = pd.read_csv("cleaned/cleaned_mobility_data.csv")
+    
+    # Reading State wise Mobility Policy data 
+    mobility_policy = pd.read_csv("cleaned/cleaned_mobility_policy_data.csv")
+    
+    return engagements, school_policy, mobility, mobility_policy
 
 
 
-engagements, plot_data, mobility = load_data()
+
+engagements, school_policy, mobility, mobility_policy = load_data()
 
 st.header("Covid-19's Impact on Education")
 st.subheader("The time when states have closed public schools")
 slider = st.slider('Select date (between March and April 2020) to see the states that have schools closed', min_value = dt.date(year=2020,month=3,day=10), max_value = dt.date(year=2020,month=4,day=4), format='MM-DD-YYYY')
 
-plot_data = plot_data.dropna(subset=["date"])[['State Abbreviation','date']]
-plot_data['Closed'] = (pd.to_datetime(plot_data['date'], format='%d/%m/%y') < pd.to_datetime(slider)).astype('str')
+school_policy = school_policy.dropna(subset=["date"])[['State Abbreviation','date']]
+school_policy['Closed'] = (pd.to_datetime(school_policy['date'], format='%d/%m/%y') < pd.to_datetime(slider)).astype('str')
 
 # Plotting the closed states based on the selected date
-fig = px.choropleth(plot_data,  # Input Pandas DataFrame
+fig = px.choropleth(school_policy,  # Input Pandas DataFrame
                     locations="State Abbreviation",  # DataFrame column with locations  # DataFrame column with color values
                     hover_name="State Abbreviation", # DataFrame column hover info
                     locationmode = 'USA-states',
@@ -65,9 +52,9 @@ fig = px.choropleth(plot_data,  # Input Pandas DataFrame
                    color_discrete_map={'True':'red',
                                         'False':'blue'}) # Set to plot as US States
 fig.add_scattergeo(name='State Names',
-    locations=plot_data['State Abbreviation'],
+    locations=school_policy['State Abbreviation'],
     locationmode='USA-states',
-    text=plot_data['State Abbreviation'],
+    text=school_policy['State Abbreviation'],
     mode='text')
 fig.update_layout(
     title_text = 'Date when public schools were closed', # Create a Title
@@ -77,10 +64,18 @@ fig.update_layout(
 )
 st.plotly_chart(fig, use_container_width=True)
 
-st.subheader("The engagement ration for various tools used for education")
+
+
+
+
+st.subheader("The engagement ratio for various tools used for education")
 
 tools = st.multiselect("Columns", ["Zoom", "Google Classroom","Canvas","Schoology", "Google Docs", "Google Sheets", "Duolingo",  "Grammarly", "Quizlet","i-Ready"], default=["Google Classroom", "Zoom"])
-engagements = engagements[tools].reset_index()
+
+columns = tools
+columns.append('time')
+engagements = engagements[columns]
+
 
 # Plotting the engagemnet data 
 fig = px.area(engagements, x = "time", y = tools)
@@ -122,6 +117,35 @@ else:
     fig = px.line(mobilityGroups, x="date",y=selected_options)
     st.plotly_chart(fig, use_container_width=True)
 
+
+st.header("Covid-19's Impact on Mobility")
+st.subheader("The time when states have restricted free movement")
+slider = st.slider('Select date (between March and April 2020) to see the states that have schools closed', min_value = dt.date(year=2020,month=2,day=2), max_value = dt.date(year=2020,month=6,day=6), format='MM-DD-YYYY')
+
+mobility_policy = mobility_policy.dropna(subset=["MobilityRestrictedDate"])[['State Abbreviation','MobilityRestrictedDate']]
+mobility_policy['Closed'] = (pd.to_datetime(mobility_policy['MobilityRestrictedDate'], format='%m/%d/%Y') < pd.to_datetime(slider,errors='coerce')).astype('str')
+
+# Plotting the closed states based on the selected date
+fig = px.choropleth(mobility_policy,  # Input Pandas DataFrame
+                    locations="State Abbreviation",  # DataFrame column with locations  # DataFrame column with color values
+                    hover_name="State Abbreviation", # DataFrame column hover info
+                    locationmode = 'USA-states',
+                    color='Closed',
+                   color_discrete_map={'True':'red',
+                                        'False':'blue'}) # Set to plot as US States
+fig.add_scattergeo(name='State Names',
+    locations=mobility_policy['State Abbreviation'],
+    locationmode='USA-states',
+    text=school_policy['State Abbreviation'],
+    mode='text')
+fig.update_layout(
+    title_text = 'Date when mobility was restricted', # Create a Title
+    geo_scope='usa',  # Plot only the USA instead of globe
+    geo=dict(bgcolor= 'rgba(0,0,0,0)',lakecolor='#4E5D6C'),
+    
+)
+st.plotly_chart(fig, use_container_width=True)
+    
 
 
 
