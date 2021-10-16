@@ -10,7 +10,8 @@ import geopandas as gpd
 from colour import Color
 import plotly.express as px 
 import datetime as dt
-import plotly.figure_factory as ff
+import plotly.graph_objects as go
+import calendar
 
 
 
@@ -29,12 +30,15 @@ def load_data():
     # Reading State wise Mobility Policy data 
     mobility_policy = pd.read_csv("cleaned/cleaned_mobility_policy_data.csv")
     
-    return engagements, school_policy, mobility, mobility_policy
+    # Reading Apple Mobility traffic information based on years
+    apple_mobility2020 = pd.read_csv('cleaned/cleaned_apple_mobility2020.csv').set_index('state')
+    apple_mobility2021 = pd.read_csv('cleaned/cleaned_apple_mobility2021.csv').set_index('state')
+    return engagements, school_policy, mobility, mobility_policy, apple_mobility2020, apple_mobility2021
 
 
 
 
-engagements, school_policy, mobility, mobility_policy = load_data()
+engagements, school_policy, mobility, mobility_policy, apple_mobility2020, apple_mobility2021 = load_data()
 
 st.header("Covid-19's Impact on Education")
 st.subheader("The time when states have closed public schools")
@@ -63,8 +67,6 @@ fig.update_layout(
     
 )
 st.plotly_chart(fig, use_container_width=True)
-
-
 
 
 
@@ -147,25 +149,27 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 
-df=pd.read_csv('apple_mobility_report_US.csv')
-df2 = df[df.transit != 0]
-df2["week"]=pd.to_datetime(df2["date"]).dt.week
-df2["month"]=pd.to_datetime(df2["date"]).dt.month
-df3 = df2.groupby(["state", 'date']).mean()
-df3.reset_index(inplace=True)
-t3=pd.pivot_table(df3, values="transit", index=["state"], columns=["month"])
+def convert(month_idx):
+    return calendar.month_abbr[int(month_idx)]
+def df_to_plotly(df):
+    x = df.columns.tolist()
+    x = list(map(convert, x))
+    return {'z': df.values.tolist(),
+            'x': x,
+            'y': df.index.tolist()}
 
-original_title = '<p style="font-family:Courier; color:Blue; font-size: 20px;">Effect of covid on transit</p>'
-st.markdown(original_title, unsafe_allow_html=True)
-fig, ax = plt.subplots(figsize=(40,60))
-plt.rcParams.update({'font.size': 40})
-#plt.title("Effect of covid on transit")
-ax=sns.heatmap(t3, linewidths=1, annot=True,cmap = "crest")
-for label in (ax.get_xticklabels() + ax.get_yticklabels()):
-    label.set_fontsize(40)
-    label.set_color('white')
-st.pyplot(fig, use_container_width=True,transparent=True)
+yearOption = st.selectbox('Which year do you want to select',('2020','2021'))
 
+if(yearOption == '2020'):
+    fig = go.Figure(
+            data=go.Heatmap(df_to_plotly(apple_mobility2020), type = 'heatmap', colorscale = 'rdbu'),
+            layout=go.Layout(width = 800,height = 1000, title="Heatmap showing the percentage change from 2019 in the transit traffic"))
+else:
+    fig = go.Figure(
+            data=go.Heatmap(df_to_plotly(apple_mobility2021), type = 'heatmap', colorscale = 'rdbu'),
+            layout=go.Layout(width = 800,height = 1000, title="Heatmap showing the percentage change from 2019 in the transit traffic"))
+
+st.plotly_chart(fig, use_container_width=True)
 
     
 
