@@ -145,6 +145,28 @@ fig.update_layout(
     
 )
 st.plotly_chart(fig, use_container_width=True)
+
+
+df=pd.read_csv('apple_mobility_report_US.csv')
+df2 = df[df.transit != 0]
+df2["week"]=pd.to_datetime(df2["date"]).dt.week
+df2["month"]=pd.to_datetime(df2["date"]).dt.month
+df3 = df2.groupby(["state", 'date']).mean()
+df3.reset_index(inplace=True)
+t3=pd.pivot_table(df3, values="transit", index=["state"], columns=["month"])
+
+original_title = '<p style="font-family:Courier; color:Blue; font-size: 20px;">Effect of covid on transit</p>'
+st.markdown(original_title, unsafe_allow_html=True)
+fig, ax = plt.subplots(figsize=(40,60))
+plt.rcParams.update({'font.size': 40})
+#plt.title("Effect of covid on transit")
+ax=sns.heatmap(t3, linewidths=1, annot=True,cmap = "crest")
+for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+    label.set_fontsize(40)
+    label.set_color('white')
+st.pyplot(fig, use_container_width=True,transparent=True)
+
+
     
 
 
