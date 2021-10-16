@@ -14,9 +14,10 @@ import plotly.graph_objects as go
 import calendar
 import json
 from urllib.request import urlopen
+from plotly.subplots import make_subplots
 #import plotly, plotly.graph_objects as go
 
-
+st.set_page_config(layout="wide")
 
 @st.cache 
 def load_data():
@@ -28,7 +29,7 @@ def load_data():
     school_policy = pd.read_csv("cleaned/cleaned_school_policy_data.csv")
     
     # Reading Google Mobility data
-    mobility = pd.read_csv("cleaned/cleaned_mobility_data.csv")
+    mobility = pd.read_csv("cleaned/cleaned_formatted_mobility.csv")
     
     # Reading State wise Mobility Policy data 
     mobility_policy = pd.read_csv("cleaned/cleaned_mobility_policy_data.csv")
@@ -37,8 +38,7 @@ def load_data():
     apple_mobility2020 = pd.read_csv('cleaned/cleaned_apple_mobility2020.csv').set_index('state')
     apple_mobility2021 = pd.read_csv('cleaned/cleaned_apple_mobility2021.csv').set_index('state')
     
-    with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
-        counties = json.load(response)
+    
     #df = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv",dtype={"fips": str})
 
     data_path="mapbox_token/"
@@ -53,108 +53,13 @@ def load_data():
         day_dt = dt.datetime.utcfromtimestamp(day_timestamp_dt)
         return day_dt.strftime("%b %d")
 
-    fig_data =go.Choroplethmapbox(geojson=counties, locations=plot_df.fips, 
-                                  z=np.log10(plot_df[plot_var]),
-                                  zmin=0,
-                                  zmax=np.log10(plot_df[plot_var].max()),
-                                  customdata=plot_df[plot_var],
-                                  name="",
-                                  text=plot_df.county.astype(str),
-                                  hovertemplate="%{text}<br>Cases: %{customdata}",
-                                  colorbar=dict(outlinewidth=1,
-                                                outlinecolor="#333333",
-                                                len=0.9,
-                                                lenmode="fraction",
-                                                xpad=30,
-                                                xanchor="right",
-                                                bgcolor=None,
-                                                title=dict(text="Cases",
-                                                           font=dict(size=14)),
-                                                tickvals=[0,1,2,3,4,5,6],
-                                                ticktext=["1", "10", "100", "1K", "10K", "100K", "1M"],
-                                                tickcolor="#333333",
-                                                tickwidth=2,
-                                                tickfont=dict(color="#333333",
-                                                              size=12)),
-                                  colorscale="ylorrd", #ylgn
-                                  #reversescale=True,
-                                  marker_opacity=0.7,
-                                  marker_line_width=0)
-
-    token = open(data_path + ".mapbox_token").read()
-    fig_layout = go.Layout(mapbox_style="light",
-                           mapbox_zoom=3,
-                           mapbox_accesstoken=token,
-                           mapbox_center={"lat": 37.0902, "lon": -95.7129},
-                           margin={"r":0,"t":0,"l":0,"b":0},
-                           plot_bgcolor=None)
-
-    fig_layout["updatemenus"] = [dict(type="buttons",
-                                      buttons=[dict(label="Play",
-                                                    method="animate",
-                                                    args=[None,
-                                                          dict(frame=dict(duration=1000,
-                                                                          redraw=True),
-                                                               fromcurrent=True)]),
-                                               dict(label="Pause",
-                                                    method="animate",
-                                                    args=[[None],
-                                                          dict(frame=dict(duration=0,
-                                                                          redraw=True),
-                                                               mode="immediate")])],
-                                      direction="left",
-                                      pad={"r": 10, "t": 35},
-                                      showactive=False,
-                                      x=0.1,
-                                      xanchor="right",
-                                      y=0,
-                                      yanchor="top")]
-
-    sliders_dict = dict(active=len(months) - 1,
-                        visible=True,
-                        yanchor="top",
-                        xanchor="left",
-                        currentvalue=dict(font=dict(size=20),
-                                          prefix="Month: ",
-                                          visible=True,
-                                          xanchor="right"),
-                        pad=dict(b=10,
-                                 t=10),
-                        len=0.875,
-                        x=0.125,
-                        y=0,
-                        steps=[])
-
-    fig_frames = []
-    for month in months:
-        plot_df = df2020[df2020.month == month]
-        frame = go.Frame(data=[go.Choroplethmapbox(locations=plot_df.fips,
-                                                   z=np.log10(plot_df[plot_var]),
-                                                   customdata=plot_df[plot_var],
-                                                   name="",
-                                                   text=plot_df.county.astype(str),
-                                                   hovertemplate="%{text}<br>%{customdata}")],
-                         name=month)
-        fig_frames.append(frame)
-
-        slider_step = dict(args=[[month],
-                                 dict(mode="immediate",
-                                      frame=dict(duration=300,
-                                                 redraw=True))],
-                           method="animate",
-                           label=month)
-        sliders_dict["steps"].append(slider_step)
-
-    fig_layout.update(sliders=[sliders_dict])
-
-    # Plot the figure 
-    fig=go.Figure(data=fig_data, layout=fig_layout, frames=fig_frames)
-    return engagements, school_policy, mobility, mobility_policy, apple_mobility2020, apple_mobility2021,fig
+    
+    return engagements, school_policy, mobility, mobility_policy, apple_mobility2020, apple_mobility2021
 
 
 
 
-engagements, school_policy, mobility, mobility_policy, apple_mobility2020, apple_mobility2021, countychloro = load_data()
+engagements, school_policy, mobilityGroups, mobility_policy, apple_mobility2020, apple_mobility2021 = load_data()
 
 st.header("Covid-19's Impact on Education")
 st.subheader("The time when states have closed public schools")
@@ -188,52 +93,50 @@ st.plotly_chart(fig, use_container_width=True)
 
 st.subheader("The engagement ratio for various tools used for education")
 
-tools = st.multiselect("Columns", ["Zoom", "Google Classroom","Canvas","Schoology", "Google Docs", "Google Sheets", "Duolingo",  "Grammarly", "Quizlet","i-Ready"], default=["Google Classroom", "Zoom"])
+tools = st.multiselect("Columns", ["Zoom", "Google Classroom","Canvas","Schoology", "Google Docs", "Google Sheets", "Duolingo",  "Grammarly", "Quizlet","i-Ready"], default=["Duolingo", "Zoom"])
 
 columns = tools
 columns.append('time')
-engagements = engagements[columns]
+engagements_df = engagements[columns]
 
 
 # Plotting the engagemnet data 
-fig = px.area(engagements, x = "time", y = tools)
+fig = px.line(engagements_df, x = "time", y = tools)
 fig.update_layout(geo=dict(bgcolor= 'rgba(0,0,0,0)'))
+fig.layout.plot_bgcolor = '#0E1117'
+fig.layout.paper_bgcolor = '#0E1117'
 st.plotly_chart(fig, use_container_width=True)
 
 
 st.header("Covid-19's impact on daily mobility")
 
-parameterOption = st.selectbox('Which mobility parameter do you want to select',
-('Retail and Recreation',
-       'Grocery and Pharmacy',
-       'Parks',
-       'Workplaces',
-       'Resedential'))
 
-mobility = mobility.reset_index()[['date','State',parameterOption]]
+fig = make_subplots(rows=2, cols=2, start_cell="top-left", shared_yaxes=True)
 
-all_options = st.checkbox("Select all states")
+fig.add_trace(go.Scatter(x=mobilityGroups["date"].values,y=mobilityGroups["Workplaces"].values.tolist(), fill='tozeroy', name='Workplaces'),row=1, col=1)
+fig.add_trace(go.Scatter( x=mobilityGroups["date"].values,y=mobilityGroups['Parks'].values.tolist(),fill='tozeroy', name='Parks'),row=1, col=2)
+fig.add_trace(go.Scatter( x=mobilityGroups["date"].values,y=mobilityGroups['Grocery and Pharmacy'].values.tolist(),fill='tozeroy', name='Grocery and Pharmacy'),row=2, col=1)
+fig.add_trace(go.Scatter( x=mobilityGroups["date"].values,y=mobilityGroups['Retail and Recreation'].values.tolist(), fill='tozeroy', name='Retail and Recreation'),row=2, col=2)
 
-if all_options:
-    mobilityGroups = mobility.groupby('date').mean().reset_index()
-    fig = px.line(mobilityGroups, x="date",y=parameterOption)
-    st.plotly_chart(fig, use_container_width=True)
+fig.update_xaxes(title_text="Workplaces", row = 1, col = 1,showticklabels=True)
+fig.update_xaxes(title_text="Parks", row = 1, col = 2,showticklabels=True)
+fig.update_xaxes(title_text="Grocery and Pharmacy", row = 2, col = 1,showticklabels=True)
+fig.update_xaxes(title_text="Retail and Recreation", row = 2, col = 2,showticklabels=True)
 
-else:
-    mobilityGroups = mobility.pivot_table(index='date', columns='State', values=parameterOption).reset_index()
-    selected_options = st.multiselect("Columns", ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California',
-           'Colorado', 'Connecticut', 'Delaware', 'District of Columbia',
-           'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana',
-           'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland',
-           'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
-           'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire',
-           'New Jersey', 'New Mexico', 'New York', 'North Carolina',
-           'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania',
-           'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee',
-           'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington',
-           'West Virginia', 'Wisconsin', 'Wyoming'], default=['Pennsylvania'])
-    fig = px.line(mobilityGroups, x="date",y=selected_options)
-    st.plotly_chart(fig, use_container_width=True)
+# Update yaxis properties
+fig.update_yaxes(title_text="Percentage change", row=1, col=1,showticklabels=True)
+fig.update_yaxes( row=1, col=2,showticklabels=True)
+fig.update_yaxes(title_text="Percentage change", row=2, col=1,showticklabels=True)
+fig.update_yaxes( row=2, col=2,showticklabels=True)
+
+fig.update_xaxes(showline=True, linewidth=2, linecolor='black')
+fig.update_layout(width=int(1500), height = int(750))
+# fig.update_yaxes(showline=True, linewidth=2, linecolor='black')
+# fig = px.line(mobilityGroups, x='date' , y='value',color='variable')
+fig.layout.plot_bgcolor = '#0E1117'
+fig.layout.paper_bgcolor = '#0E1117'
+st.plotly_chart(fig, use_container_width=True)
+
 
 
 st.header("Covid-19's Impact on Mobility")
@@ -265,6 +168,8 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 
+
+###### Plotting Heatmap ######
 def convert(month_idx):
     return calendar.month_abbr[int(month_idx)]
 def df_to_plotly(df):
@@ -279,13 +184,121 @@ yearOption = st.selectbox('Which year do you want to select',('2020','2021'))
 if(yearOption == '2020'):
     fig = go.Figure(
             data=go.Heatmap(df_to_plotly(apple_mobility2020), type = 'heatmap', colorscale = 'rdbu'),
-            layout=go.Layout(width = 800,height = 1000, title="Heatmap showing the percentage change from 2019 in the transit traffic"))
+            layout=go.Layout(width = 600,height = 1000, title="Heatmap showing the percentage change from 2019 in the transit traffic"))
 else:
     fig = go.Figure(
             data=go.Heatmap(df_to_plotly(apple_mobility2021), type = 'heatmap', colorscale = 'rdbu'),
-            layout=go.Layout(width = 800,height = 1000, title="Heatmap showing the percentage change from 2019 in the transit traffic"))
+            layout=go.Layout(width = 600,height = 1000, title="Heatmap showing the percentage change from 2019 in the transit traffic"))
 
 st.plotly_chart(fig, use_container_width=True)
+
+
+### Plotting covid data ####
+data_path="mapbox_token/"
+#days = np.sort(plot_df.date.unique())
+months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+
+df2020=pd.read_csv('cleaned/cleaned_county_covid_2020.csv')
+plot_df=df2020
+plot_var="cases"
+with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
+        counties = json.load(response)
+fig_data =go.Choroplethmapbox(geojson=counties, locations=plot_df.fips, 
+                              z=np.log10(plot_df[plot_var]),
+                              zmin=0,
+                              zmax=np.log10(plot_df[plot_var].max()),
+                              customdata=plot_df[plot_var],
+                              name="",
+                              text=plot_df.county.astype(str),
+                              hovertemplate="%{text}<br>Cases: %{customdata}",
+                              colorbar=dict(outlinewidth=1,
+                                            outlinecolor="#333333",
+                                            len=0.9,
+                                            lenmode="fraction",
+                                            xpad=30,
+                                            xanchor="right",
+                                            bgcolor=None,
+                                            title=dict(text="Cases",
+                                                       font=dict(size=14)),
+                                            tickvals=[0,1,2,3,4,5,6],
+                                            ticktext=["1", "10", "100", "1K", "10K", "100K", "1M"],
+                                            tickcolor="#333333",
+                                            tickwidth=2,
+                                            tickfont=dict(color="#333333",
+                                                          size=12)),
+                              colorscale="ylorrd", #ylgn
+                              #reversescale=True,
+                              marker_opacity=0.7,
+                              marker_line_width=0)
+
+token = open(data_path + ".mapbox_token").read()
+fig_layout = go.Layout(mapbox_style="light",
+                       mapbox_zoom=3,
+                       mapbox_accesstoken=token,
+                       mapbox_center={"lat": 37.0902, "lon": -95.7129},
+                       margin={"r":0,"t":0,"l":0,"b":0},
+                       plot_bgcolor=None)
+
+fig_layout["updatemenus"] = [dict(type="buttons",
+                                  buttons=[dict(label="Play",
+                                                method="animate",
+                                                args=[None,
+                                                      dict(frame=dict(duration=1000,
+                                                                      redraw=True),
+                                                           fromcurrent=True)]),
+                                           dict(label="Pause",
+                                                method="animate",
+                                                args=[[None],
+                                                      dict(frame=dict(duration=0,
+                                                                      redraw=True),
+                                                           mode="immediate")])],
+                                  direction="left",
+                                  pad={"r": 10, "t": 35},
+                                  showactive=False,
+                                  x=0.1,
+                                  xanchor="right",
+                                  y=0,
+                                  yanchor="top")]
+
+sliders_dict = dict(active=len(months) - 1,
+                    visible=True,
+                    yanchor="top",
+                    xanchor="left",
+                    currentvalue=dict(font=dict(size=20),
+                                      prefix="Month: ",
+                                      visible=True,
+                                      xanchor="right"),
+                    pad=dict(b=10,
+                             t=10),
+                    len=0.875,
+                    x=0.125,
+                    y=0,
+                    steps=[])
+
+fig_frames = []
+for month in months:
+    plot_df = df2020[df2020.month == month]
+    frame = go.Frame(data=[go.Choroplethmapbox(locations=plot_df.fips,
+                                               z=np.log10(plot_df[plot_var]),
+                                               customdata=plot_df[plot_var],
+                                               name="",
+                                               text=plot_df.county.astype(str),
+                                               hovertemplate="%{text}<br>%{customdata}")],
+                     name=month)
+    fig_frames.append(frame)
+
+    slider_step = dict(args=[[month],
+                             dict(mode="immediate",
+                                  frame=dict(duration=300,
+                                             redraw=True))],
+                       method="animate",
+                       label=month)
+    sliders_dict["steps"].append(slider_step)
+
+fig_layout.update(sliders=[sliders_dict])
+
+# Plot the figure 
+countychloro=go.Figure(data=fig_data, layout=fig_layout, frames=fig_frames)
 st.plotly_chart(countychloro, use_container_width=True)
 
 
