@@ -5,3 +5,9 @@ geoplot
 matplotlib
 seaborn
 colour
+json
+plotly
+geopandas
+datetime
+calendar
+urllib
