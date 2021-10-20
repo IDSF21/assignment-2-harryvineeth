@@ -4,7 +4,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import json, ast
-from matplotlib.ticker import MaxNLocator
 import plotly.figure_factory as ff
 import geopandas as gpd
 from colour import Color
