@@ -37,22 +37,6 @@ def load_data():
     apple_mobility2020 = pd.read_csv('cleaned/cleaned_apple_mobility2020.csv').set_index('state')
     apple_mobility2021 = pd.read_csv('cleaned/cleaned_apple_mobility2021.csv').set_index('state')
     
-    
-    #df = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv",dtype={"fips": str})
-
-    data_path="mapbox_token/"
-    #days = np.sort(plot_df.date.unique())
-    months = ["Jan 2020","Feb 2020","Mar 2020","Apr 2020","May 2020","Jun 2020","Jul 2020","Aug 2020","Sep 2020","Oct 2020","Nov 2020","Dec 2020", "Jan 2021","Feb 2021","Mar 2021","Apr 2021","May 2021","Jun 2021","Jul 2021","Aug 2021","Sep 2021","Oct 2021"]
-    
-    df2020=pd.read_csv("cleaned/cleaned_chloro_combined.csv")
-    plot_df=df2020
-    plot_var="cases"
-    def numpy_dt64_to_str(dt64):
-        day_timestamp_dt = (dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
-        day_dt = dt.datetime.utcfromtimestamp(day_timestamp_dt)
-        return day_dt.strftime("%b %d")
-
-    
     return engagements, school_policy, mobility, mobility_policy, apple_mobility2020, apple_mobility2021
 
 
@@ -63,12 +47,12 @@ engagements, school_policy, mobilityGroups, mobility_policy, apple_mobility2020,
 
 buff, col, buff2 = st.columns([1,3,1])
 col.title("How has COVID affected the daily lives of people?")
-col.markdown("On 17th November 2019 the first case of COVID-19 was detected. It has been almost two years since then and the world continues to change and adapt to the ever-evolving pandemic. These changes can be classfied as macro and micro level changes. The former refers to changes at a global scale whereas the latter refers to changes at an individual's scale. Macro level changes include the effects on global economy, trade and commerce. Such changes have been quantified and presented in numerous studies. However, the effects of COVID at a micro level are just as apparent and important. The pandemic has led to subtle and not-so-subtle adjustments in the daily routines of people. These adjustments will cumulate over time and lead to several social and psychological repercussions. This is a study to attempt to quantify these adjustments and discuss the possible implications.")
+col.markdown("On 17th November 2019 the first case of COVID-19 was detected. It has been almost two years since then and the world continues to change and adapt to the ever-evolving pandemic. These changes can be classfied as macro and micro level changes. The former refers to changes at a global scale whereas the latter refers to changes at an individual's scale. Macro level changes include the effects on global economy, trade and commerce. Such changes have been quantified and presented in numerous studies. However, the effects of COVID at a micro level are just as apparent and important. The pandemic has led to subtle and not-so-subtle adjustments in the daily routines of people. These adjustments will cumulate over time and lead to several social and psychological repercussions. This is a study to attempt to quantify these adjustments and discuss the possible implications. The visualizations have been ordered in a descending order according to impact. Thus the impact on the lives of children has been discussed first and we then go on to discuss the changes for adults.")
 col.markdown("******")
 col.header("How has COVID-19 affected the lives of children?")
 col.markdown("To prevent the spread of infection, public schools were shut down all across the United States. Different schools were shut at different times in accordance with state policies.")
 
-buff, col2, buff2 = st.columns([2,1,2])
+buff, col2, buff2 = st.columns([2,3,2])
 slider = col2.slider('Move the slider below to view schools in states getting shut over the course of 2020.', min_value = dt.date(year=2020,month=3,day=10), max_value = dt.date(year=2020,month=4,day=4), format='MM-DD-YYYY')
 school_policy = school_policy.dropna(subset=["date"])[['State Abbreviation','date']]
 school_policy['Public Schools Closed'] = (pd.to_datetime(school_policy['date'], format='%d/%m/%y') < pd.to_datetime(slider)).astype('str')
@@ -86,8 +70,7 @@ fig.add_scattergeo(name='State Names',
     locationmode='USA-states',
     text=school_policy['State Abbreviation'],
     mode='text')
-fig.update_layout(
-    title_text = 'Date when public schools were closed', # Create a Title
+fig.update_layout( # Create a Title
     geo_scope='usa',  # Plot only the USA instead of globe
     geo=dict(bgcolor= 'rgba(0,0,0,0)',lakecolor='#4E5D6C'),
     
@@ -99,7 +82,6 @@ col.markdown("******")
 
 buff, col, buff2 = st.columns([1,3,1])
 col.header("How have schools adapted to these changes?")
-col.markdown("Shutting of schools meant big changes in children's daily activites. Chalkboards were replaced by screens and playgrounds were replaced by living rooms. This led to an upsurge in the usage of several educational tools and platforms. Choose the tools below to view the change in usage over the course of 2020.")
 tools = col.multiselect("Educational Tools", ["Zoom", "Google Classroom","Canvas","Schoology", "Google Docs", "Google Sheets", "Duolingo",  "Grammarly", "Quizlet","i-Ready"], default=["Duolingo", "Zoom"])
 
 columns = tools
@@ -114,14 +96,14 @@ fig.layout.paper_bgcolor = '#0E1117'
 fig.update_layout(legend_title_text='Educational tools', title='Usage of various Education tools during 2020',
                    xaxis_title='Month',
                    yaxis_title='Usage')
-st.plotly_chart(fig, use_container_width=True)
+col.plotly_chart(fig, use_container_width=True)
 col.markdown("Interestingly, one can clearly see the sharp or gradual rise in the usage of these tools around March and April. Another interesting observation is that Duolingo is the only tool that shows a sharp decline since March. This can be explained by the imposition of travel restrictions around that time.")
 buff, col, buff2 = st.columns([1,3,1])
 col.markdown("The long term impact of these changes is currently unknown and can merely be guessed. Both physical and mental development of children is bound to be affected. Increased screen time has become unavoidable and children are missing out on peer interactions that are vital for soft skills development. Another case to consider would be of infants who have spent the first 2 years of their lives completely indoors. ")
 col.markdown("******")
 col.header("What about adults?")
 col.markdown("The government issued stay-at-home regulations to curb the growing number of cases. Different states issued orders at different times in as a reactionary response to the number of active cases.")
-buff, col2, buff2 = st.columns([2,1,2])
+buff, col2, buff2 = st.columns([2,3,2])
 slider = col2.slider('Move the slider below to view states issuing stay-at-home orders over the course of 2020.', min_value = dt.date(year=2020,month=2,day=28), max_value = dt.date(year=2020,month=3,day=22), format='MM-DD-YYYY')
 
 mobility_policy = mobility_policy.dropna(subset=["MobilityRestrictedDate"])[['State Abbreviation','MobilityRestrictedDate']]
@@ -140,8 +122,7 @@ fig.add_scattergeo(name='State Names',
     locationmode='USA-states',
     text=school_policy['State Abbreviation'],
     mode='text')
-fig.update_layout(
-    title_text = 'Date when mobility was restricted', # Create a Title
+fig.update_layout(# Create a Title
     geo_scope='usa',  # Plot only the USA instead of globe
     geo=dict(bgcolor= 'rgba(0,0,0,0)',lakecolor='#4E5D6C'),
     
@@ -210,15 +191,15 @@ buff, col, buff2 = st.columns([1,3,1])
 col.plotly_chart(fig, use_container_width=True)
 col.markdown("******")
 
-# col.header("Add header")
-# col.markdown("Add text")
+col.header("Conclusion")
+col.markdown("As we can see there is a clear decrease in traffic over the course of 2020. The number of COVID cases are also decreasing gradually after their initial increase. We can see this in the visualization below. Hopefully, the alterations in people's lifestyles and routines do not lead to long term negative changes. As we adapt to a new normal, we should aim to reach a new equilibrium which leads to routines that prioritize physical and mental well being of children and adults alike.")
 ### Plotting covid data ####
 data_path="mapbox_token/"
 with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
     counties = json.load(response)
-df2020=pd.read_csv("cleaned/cleaned_chloro.csv",index_col=False,dtype={"fips": str,"county": str})
+df2020=pd.read_csv("cleaned/cleaned_covid_data.csv",index_col=False,dtype={"fips": str,"county": str})
 plot_df=df2020
-plot_var="cases"
+plot_var="diffs"
 #days = np.sort(plot_df.date.unique())
 months = ["Jan 2020","Feb 2020","Mar 2020","Apr 2020","May 2020","Jun 2020","Jul 2020","Aug 2020","Sep 2020","Oct 2020","Nov 2020","Dec 2020", "Jan 2021","Feb 2021","Mar 2021","Apr 2021","May 2021","Jun 2021","Jul 2021","Aug 2021","Sep 2021","Oct 2021"]
 
