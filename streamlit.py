@@ -100,7 +100,7 @@ col.markdown("******")
 buff, col, buff2 = st.columns([1,3,1])
 col.header("How have schools adapted to these changes?")
 col.markdown("Shutting of schools meant big changes in children's daily activites. Chalkboards were replaced by screens and playgrounds were replaced by living rooms. This led to an upsurge in the usage of several educational tools and platforms. Choose the tools below to view the change in usage over the course of 2020.")
-tools = col.multiselect("Columns", ["Zoom", "Google Classroom","Canvas","Schoology", "Google Docs", "Google Sheets", "Duolingo",  "Grammarly", "Quizlet","i-Ready"], default=["Duolingo", "Zoom"])
+tools = col.multiselect("Educational Tools", ["Zoom", "Google Classroom","Canvas","Schoology", "Google Docs", "Google Sheets", "Duolingo",  "Grammarly", "Quizlet","i-Ready"], default=["Duolingo", "Zoom"])
 
 columns = tools
 columns.append('time')
@@ -111,9 +111,9 @@ fig.update_layout(geo=dict(bgcolor= 'rgba(0,0,0,0)'))
 fig.update_traces(mode="markers+lines", hovertemplate=None)
 fig.layout.plot_bgcolor = '#0E1117'
 fig.layout.paper_bgcolor = '#0E1117'
-fig.update_layout(legend_title_text='Educational tools', title='Engagement Index of various Eductaion tools during 2020',
+fig.update_layout(legend_title_text='Educational tools', title='Usage of various Education tools during 2020',
                    xaxis_title='Month',
-                   yaxis_title='Engagement Index')
+                   yaxis_title='Usage')
 st.plotly_chart(fig, use_container_width=True)
 col.markdown("Interestingly, one can clearly see the sharp or gradual rise in the usage of these tools around March and April. Another interesting observation is that Duolingo is the only tool that shows a sharp decline since March. This can be explained by the imposition of travel restrictions around that time.")
 buff, col, buff2 = st.columns([1,3,1])
@@ -122,7 +122,7 @@ col.markdown("******")
 col.header("What about adults?")
 col.markdown("The government issued stay-at-home regulations to curb the growing number of cases. Different states issued orders at different times in as a reactionary response to the number of active cases.")
 buff, col2, buff2 = st.columns([2,1,2])
-slider = col2.slider('Move the slider below to view states issuing stay-at-home orders over the course of 2020.', min_value = dt.date(year=2020,month=2,day=2), max_value = dt.date(year=2020,month=4,day=6), format='MM-DD-YYYY')
+slider = col2.slider('Move the slider below to view states issuing stay-at-home orders over the course of 2020.', min_value = dt.date(year=2020,month=2,day=28), max_value = dt.date(year=2020,month=3,day=22), format='MM-DD-YYYY')
 
 mobility_policy = mobility_policy.dropna(subset=["MobilityRestrictedDate"])[['State Abbreviation','MobilityRestrictedDate']]
 mobility_policy['Stay at Home Policy declared'] = (pd.to_datetime(mobility_policy['MobilityRestrictedDate'], format='%m/%d/%Y') < pd.to_datetime(slider,errors='coerce')).astype('str')
@@ -169,6 +169,7 @@ fig.update_yaxes( row=2, col=2,showticklabels=True)
 
 fig.update_xaxes(showline=True, linewidth=2, linecolor='black')
 fig.update_layout(width=int(1500), height = int(750))
+fig.update_layout(legend_title_text='Commonly Visited Places', title='Percentage Change in Frequency of commonly visited places compared to baseline (2019)')
 # fig.update_yaxes(showline=True, linewidth=2, linecolor='black')
 # fig = px.line(mobilityGroups, x='date' , y='value',color='variable')
 fig.layout.plot_bgcolor = '#0E1117'
@@ -199,11 +200,11 @@ yearOption = col.selectbox('Year',('2020','2021'))
 if(yearOption == '2020'):
     fig = go.Figure(
             data=go.Heatmap(df_to_plotly(apple_mobility2020), type = 'heatmap', colorscale = 'rdbu'),
-            layout=go.Layout(width = 600,height = 1000, title="Heatmap showing the percentage change from 2019 in the transit traffic"))
+            layout=go.Layout(width = 600,height = 1000, title="Percentage change in transit traffic compared to baseline (2019)"))
 else:
     fig = go.Figure(
             data=go.Heatmap(df_to_plotly(apple_mobility2021), type = 'heatmap', colorscale = 'rdbu'),
-            layout=go.Layout(width = 600,height = 1000, title="Heatmap showing the percentage change from 2019 in the transit traffic"))
+            layout=go.Layout(width = 600,height = 1000, title="Percentage change in transit traffic compared to baseline (2019)"))
 
 buff, col, buff2 = st.columns([1,3,1])
 col.plotly_chart(fig, use_container_width=True)
