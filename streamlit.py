@@ -42,9 +42,9 @@ def load_data():
 
     data_path="mapbox_token/"
     #days = np.sort(plot_df.date.unique())
-    months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    months = ["Jan 2020","Feb 2020","Mar 2020","Apr 2020","May 2020","Jun 2020","Jul 2020","Aug 2020","Sep 2020","Oct 2020","Nov 2020","Dec 2020", "Jan 2021","Feb 2021","Mar 2021","Apr 2021","May 2021","Jun 2021","Jul 2021","Aug 2021","Sep 2021","Oct 2021"]
     
-    df2020=pd.read_csv('cleaned/cleaned_county_covid_2020.csv')
+    df2020=pd.read_csv("cleaned/cleaned_chloro_combined.csv")
     plot_df=df2020
     plot_var="cases"
     def numpy_dt64_to_str(dt64):
@@ -65,20 +65,20 @@ buff, col, buff2 = st.columns([1,3,1])
 col.title("How has COVID affected the daily lives of people?")
 col.markdown("On 17th November 2019 the first case of COVID-19 was detected. It has been almost two years since then and the world continues to change and adapt to the ever-evolving pandemic. These changes can be classfied as macro and micro level changes. The former refers to changes at a global scale whereas the latter refers to changes at an individual's scale. Macro level changes include the effects on global economy, trade and commerce. Such changes have been quantified and presented in numerous studies. However, the effects of COVID at a micro level are just as apparent and important. The pandemic has led to subtle and not-so-subtle adjustments in the daily routines of people. These adjustments will cumulate over time and lead to several social and psychological repercussions. This is a study to attempt to quantify these adjustments and discuss the possible implications.")
 col.markdown("******")
-col.header("How has COVID affected the lives of children?")
+col.header("How has COVID-19 affected the lives of children?")
 col.markdown("To prevent the spread of infection, public schools were shut down all across the United States. Different schools were shut at different times in accordance with state policies.")
 
 buff, col2, buff2 = st.columns([2,1,2])
 slider = col2.slider('Move the slider below to view schools in states getting shut over the course of 2020.', min_value = dt.date(year=2020,month=3,day=10), max_value = dt.date(year=2020,month=4,day=4), format='MM-DD-YYYY')
 school_policy = school_policy.dropna(subset=["date"])[['State Abbreviation','date']]
-school_policy['Closed'] = (pd.to_datetime(school_policy['date'], format='%d/%m/%y') < pd.to_datetime(slider)).astype('str')
+school_policy['Public Schools Closed'] = (pd.to_datetime(school_policy['date'], format='%d/%m/%y') < pd.to_datetime(slider)).astype('str')
 
 # Plotting the closed states based on the selected date
 fig = px.choropleth(school_policy,  # Input Pandas DataFrame
                     locations="State Abbreviation",  # DataFrame column with locations  # DataFrame column with color values
                     hover_name="State Abbreviation", # DataFrame column hover info
                     locationmode = 'USA-states',
-                    color='Closed',
+                    color='Public Schools Closed',
                    color_discrete_map={'True':'red',
                                         'False':'blue'}) # Set to plot as US States
 fig.add_scattergeo(name='State Names',
@@ -106,10 +106,14 @@ columns = tools
 columns.append('time')
 engagements_df = engagements[columns]
 # Plotting the engagemnet data 
-fig = px.line(engagements_df, x = "time", y = tools)
+fig = px.line(engagements_df, x = "time", y = tools, markers=True)
 fig.update_layout(geo=dict(bgcolor= 'rgba(0,0,0,0)'))
+fig.update_traces(mode="markers+lines", hovertemplate=None)
 fig.layout.plot_bgcolor = '#0E1117'
 fig.layout.paper_bgcolor = '#0E1117'
+fig.update_layout(legend_title_text='Educational tools', title='Engagement Index of various Eductaion tools during 2020',
+                   xaxis_title='Month',
+                   yaxis_title='Engagement Index')
 st.plotly_chart(fig, use_container_width=True)
 col.markdown("Interestingly, one can clearly see the sharp or gradual rise in the usage of these tools around March and April. Another interesting observation is that Duolingo is the only tool that shows a sharp decline since March. This can be explained by the imposition of travel restrictions around that time.")
 buff, col, buff2 = st.columns([1,3,1])
@@ -121,14 +125,14 @@ buff, col2, buff2 = st.columns([2,1,2])
 slider = col2.slider('Move the slider below to view states issuing stay-at-home orders over the course of 2020.', min_value = dt.date(year=2020,month=2,day=2), max_value = dt.date(year=2020,month=4,day=6), format='MM-DD-YYYY')
 
 mobility_policy = mobility_policy.dropna(subset=["MobilityRestrictedDate"])[['State Abbreviation','MobilityRestrictedDate']]
-mobility_policy['Declared'] = (pd.to_datetime(mobility_policy['MobilityRestrictedDate'], format='%m/%d/%Y') < pd.to_datetime(slider,errors='coerce')).astype('str')
+mobility_policy['Stay at Home Policy declared'] = (pd.to_datetime(mobility_policy['MobilityRestrictedDate'], format='%m/%d/%Y') < pd.to_datetime(slider,errors='coerce')).astype('str')
 
 # Plotting the closed states based on the selected date
 fig = px.choropleth(mobility_policy,  # Input Pandas DataFrame
                     locations="State Abbreviation",  # DataFrame column with locations  # DataFrame column with color values
                     hover_name="State Abbreviation", # DataFrame column hover info
                     locationmode = 'USA-states',
-                    color='Declared',
+                    color='Stay at Home Policy declared',
                    color_discrete_map={'True':'red',
                                         'False':'blue'}) # Set to plot as US States
 fig.add_scattergeo(name='State Names',
@@ -187,7 +191,7 @@ def df_to_plotly(df):
 
 
 col.header("So, has traffic reduced?")
-col.markdown("To look at the postive side of things, in response to schools shutting and stay-at-home orders being issued, transit traffic reduced significantly in 2020. This year as few workplaces opened up and restrictions have been eased, traffic levels have increased again. This can be seen in the heatmap below.")
+col.markdown("To look at the positive side of things, in response to schools shutting and stay-at-home orders being issued, transit traffic reduced significantly in 2020. This year as few workplaces opened up and restrictions have been eased, traffic levels have increased again. This can be seen in the heatmap below.")
 
 buff, col, buff2 = st.columns([6,1,6])
 yearOption = col.selectbox('Year',('2020','2021'))
@@ -215,7 +219,7 @@ df2020=pd.read_csv("cleaned/cleaned_chloro.csv",index_col=False,dtype={"fips": s
 plot_df=df2020
 plot_var="cases"
 #days = np.sort(plot_df.date.unique())
-months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+months = ["Jan 2020","Feb 2020","Mar 2020","Apr 2020","May 2020","Jun 2020","Jul 2020","Aug 2020","Sep 2020","Oct 2020","Nov 2020","Dec 2020", "Jan 2021","Feb 2021","Mar 2021","Apr 2021","May 2021","Jun 2021","Jul 2021","Aug 2021","Sep 2021","Oct 2021"]
 
 def numpy_dt64_to_str(dt64):
     day_timestamp_dt = (dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
